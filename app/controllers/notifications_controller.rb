@@ -1,24 +1,32 @@
 class NotificationsController < ApplicationController
   def next_to_run
-    cron = Cron.next_to_run
-    msg = cron.reminder.description
-    notification = {'msg' => msg}
-    notification['id'] = NotificationHistory.create!(cron_id: cron.id).id
-
-    render json: notification.to_json
+    if cron = Cron.next_to_run
+      msg = cron.reminder.description
+      notification = {'msg' => msg}
+      notification['id'] = NotificationHistory.create!(cron_id: cron.id, started_at: Time.now).id
+      render json: notification.to_json
+    else
+      render json: '{}'
+    end
   end
 
   def snooze
-    pp params
-    NotificationHistory.find(params['id']).snooze(params['time'])
+    nh = NotificationHistory.find(params['id'])
+    nh.snooze(params['time'])
+    nh.cron.ended_at = Time.now
   end
 
   def mark_as
-    NotificationHistory.find(params['id']).mark_as(params['state'])
+    nh = NotificationHistory.find(params['id'])
+    nh.mark_as(params['state'])
+    nh.cron.ended_at = Time.now
   end
 
   def waiting
-    @waiting = Cron.waiting
-      render json: @waiting.to_json
+    if waiting = Cron.waiting
+      render json: waiting.to_json
+    else
+      render json: '{}'
+    end
   end
 end

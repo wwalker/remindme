@@ -91,6 +91,18 @@ class Scheduler
       STDERR.puts response.message
       STDERR.puts response.code
       STDERR.puts response.body
+      return JSON.parse('{}')
+    end
+  end
+
+  def waiting
+    response = @client.send_request(:get, '/notifications/waiting.json')
+    handle_response(response)
+  end
+
+  def print_waiting
+    if w = waiting
+      puts w.map{|x| x.next_run}.sort
     end
   end
 
@@ -103,22 +115,20 @@ class Scheduler
         body = response.body
         STDERR.puts "<#{response.body}>"
         response_json = JSON.parse(body)
-        msg = response_json['msg']
         id = response_json['id']
-
-        STDERR.puts response_json
-
-        choice = handle_notification(msg)
-        STDERR.puts "<#{choice}>"
-        case choice
-        when 'Done', 'Already Done', 'Skip'
-          mark_as(id, choice)
-        when 'Snooze'
-          STDERR.puts 'We should never get "Snooze" as a choice'
-        when /^\s*[0-9]+\s*[hms]?\s*$/
-          snooze(id, choice)
-        else
-          STDERR.puts "Why is choice <#{choice}>?"
+        if msg = response_json['msg']
+          choice = handle_notification(msg)
+          STDERR.puts "<#{choice}>"
+          case choice
+          when 'Done', 'Already Done', 'Skip'
+            mark_as(id, choice)
+          when 'Snooze'
+            STDERR.puts 'We should never get "Snooze" as a choice'
+          when /^\s*[0-9]+\s*[hms]?\s*$/
+            snooze(id, choice)
+          else
+            STDERR.puts "Why is choice <#{choice}>?"
+          end
         end
       else
         STDERR.puts 'Something went wrong:'
@@ -127,6 +137,7 @@ class Scheduler
         STDERR.puts response.code
         STDERR.puts response.body
       end
+      print_waiting
       input = gets
     end
   end
