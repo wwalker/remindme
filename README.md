@@ -18,7 +18,9 @@ While there are many apps out there that call themselves "reminder apps" or "cal
 
 #### NONE of the more than 30 apps I tried ACTUALLY REMINDS you!!!
 
-Two apps came close.  `BZ Reminder` and `Todoist` both have something that is a **_little_** bit better than all the others.  They try to notify you more than once, but use such polite, quiet tones, without even a popup window, that I never even noticed them when I was testing them (meaning I was waiting for said notification...
+Two apps came close.  `BZ Reminder` and `Todoist` both have something that is a **_little_** bit better than all the others.  They try to notify you more than once, but use such polite, quiet tones, without even a popup window, that I never even noticed them when I was testing them (meaning I was waiting for said notification...)  They also have unchangeable "snooze" times.
+
+**_\*\*Every time I get a popup reminder, I, being an adult, want to choose whether I snooze the reminder for 1 minute (I'm brushing my teeth), or 35 minutes (that's when my meeting will be over).  I found NO tool with "on the fly/this time only" changeable snooze times.
 
 ## Then what do you want??
 
