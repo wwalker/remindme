@@ -1,3 +1,7 @@
 #!/usr/bin/env ruby
 
 require_relative '../lib/scheduler/scheduler.rb'
+
+ENV['TZ']='UTC'
+
+Scheduler.new.run

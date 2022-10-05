@@ -18,7 +18,7 @@ module ApiClient
 
     API_URLS = {
       staging: 'http://projectname-staging.client.com/api/v1',
-      development: 'http://localhost:3000'
+      development: 'http://localhost:3001'
     }.freeze
 
     METHODS = { post: Net::HTTP::Post, put: Net::HTTP::Put, get: Net::HTTP::Get }.freeze
@@ -99,20 +99,38 @@ class Scheduler
     end
   end
 
+  def next_runs
+    response = @client.send_request(:get, '/notifications/next_runs.json')
+    handle_response(response)
+  end
+
   def waiting
     response = @client.send_request(:get, '/notifications/waiting.json')
     handle_response(response)
   end
 
+  def print_next_runs
+    if nr = next_runs
+      nr.sort{|a,b| a['next_run'] <=> b['next_run']}.each{|r| pp r}
+    else
+      puts 'There should always be next_runs...'  
+    end
+  end
+
   def print_waiting
     if w = waiting
       puts w.map{|x| x['next_run']}.sort
+    else
+      false
     end
   end
 
   def run
     @client = ApiClient::Http.new
     while true do
+      puts 1
+      print_next_runs unless print_waiting
+      puts 2
       response = @client.send_request(:get, '/notifications/next_to_run.json')
         response_json = handle_response(response)
         id = response_json['id']
@@ -129,11 +147,9 @@ class Scheduler
           else
             debug_log "Why is choice <#{choice}>?"
           end
+        else
+          sleep 5
         end
-      print_waiting
-      sleep 3
     end
   end
 end
-
-Scheduler.new.run

@@ -22,6 +22,10 @@ class NotificationsController < ApplicationController
     nh.ended_at = Time.now
   end
 
+  def next_runs
+    render json: Cron.all.map{|x| {last_run: x.last_run, next_run: x.next_run, msg: x.reminder.description}}
+  end
+
   def waiting
     if waiting = Cron.waiting
       render json: waiting.to_json
