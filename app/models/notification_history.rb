@@ -4,7 +4,6 @@ class NotificationHistory < ApplicationRecord
   def mark_as(state)
     now = Time.now
 
-    puts "state:<#{state}>"
     case state
     when 'Done', 'Already Done', 'Skip'
       self.ended_at = now
@@ -33,6 +32,7 @@ class NotificationHistory < ApplicationRecord
       die("Bad input - period:<#{period}>")
     end
     self.cron.next_run = now + period
+    self.cron.last_run = now
     self.cron.save!
     self.save!
   end

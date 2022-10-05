@@ -13,13 +13,13 @@ class NotificationsController < ApplicationController
   def snooze
     nh = NotificationHistory.find(params['id'])
     nh.snooze(params['time'])
-    nh.cron.ended_at = Time.now
+    nh.ended_at = Time.now
   end
 
   def mark_as
     nh = NotificationHistory.find(params['id'])
     nh.mark_as(params['state'])
-    nh.cron.ended_at = Time.now
+    nh.ended_at = Time.now
   end
 
   def waiting

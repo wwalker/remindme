@@ -38,6 +38,6 @@ class Cron < ApplicationRecord
     cp = CronParser.new(entry)
     last_cron_run_time = cp.last(Time.now)
 
-    self.next_run = (last_cron_run_time > self.last_run) ? cp.next(Time.now) : last_cron_run_time
+    self.next_run = ((last_cron_run_time > self.last_run) ? cp.next(Time.now) : last_cron_run_time) - 24.hour
   end
 end

@@ -59,6 +59,10 @@ module ApiClient
 end
 
 class Scheduler
+  def debug_log(msg)
+    STDERR.puts(msg)
+  end
+
   def handle_notification(msg)
     choices=['Done', 'Already Done', 'Snooze', 'Skip']
     stdout, stderr, status = Open3.capture3('rofi-choices', msg, *choices)
@@ -84,13 +88,13 @@ class Scheduler
     when '200','204'
       body = response.body
       body ||= '{}'
-      STDERR.puts "<#{response.body}>"
+      debug_log "<#{response.body}>"
       response_json = JSON.parse(body)
     else
-      STDERR.puts 'Something went wrong:'
-      STDERR.puts response.message
-      STDERR.puts response.code
-      STDERR.puts response.body
+      debug_log 'Something went wrong:'
+      debug_log response.message
+      debug_log response.code
+      debug_log response.body
       return JSON.parse('{}')
     end
   end
@@ -102,7 +106,7 @@ class Scheduler
 
   def print_waiting
     if w = waiting
-      puts w.map{|x| x.next_run}.sort
+      puts w.map{|x| x['next_run']}.sort
     end
   end
 
@@ -113,29 +117,29 @@ class Scheduler
       case response.code 
       when '200','204'
         body = response.body
-        STDERR.puts "<#{response.body}>"
+        debug_log "<#{response.body}>"
         response_json = JSON.parse(body)
         id = response_json['id']
         if msg = response_json['msg']
           choice = handle_notification(msg)
-          STDERR.puts "<#{choice}>"
+          debug_log "<#{choice}>"
           case choice
           when 'Done', 'Already Done', 'Skip'
             mark_as(id, choice)
           when 'Snooze'
-            STDERR.puts 'We should never get "Snooze" as a choice'
+            debug_log 'We should never get "Snooze" as a choice'
           when /^\s*[0-9]+\s*[hms]?\s*$/
             snooze(id, choice)
           else
-            STDERR.puts "Why is choice <#{choice}>?"
+            debug_log "Why is choice <#{choice}>?"
           end
         end
       else
-        STDERR.puts 'Something went wrong:'
-        STDERR.puts response.message
-        STDERR.puts response.code.class
-        STDERR.puts response.code
-        STDERR.puts response.body
+        debug_log 'Something went wrong:'
+        debug_log response.message
+        debug_log response.code.class
+        debug_log response.code
+        debug_log response.body
       end
       print_waiting
       input = gets
