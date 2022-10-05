@@ -114,11 +114,7 @@ class Scheduler
     @client = ApiClient::Http.new
     while true do
       response = @client.send_request(:get, '/notifications/next_to_run.json')
-      case response.code 
-      when '200','204'
-        body = response.body
-        debug_log "<#{response.body}>"
-        response_json = JSON.parse(body)
+        response_json = handle_response(response)
         id = response_json['id']
         if msg = response_json['msg']
           choice = handle_notification(msg)
@@ -134,13 +130,6 @@ class Scheduler
             debug_log "Why is choice <#{choice}>?"
           end
         end
-      else
-        debug_log 'Something went wrong:'
-        debug_log response.message
-        debug_log response.code.class
-        debug_log response.code
-        debug_log response.body
-      end
       print_waiting
       input = gets
     end
