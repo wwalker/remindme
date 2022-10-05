@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  reminder_id: MyString
+  result: MyString
+  started_at: 2022-06-01 20:33:00
+  ended_at: 2022-06-01 20:33:00
+  deleted_at: 2022-06-01 20:33:00
+  timestamps: MyString
+
+two:
+  reminder_id: MyString
+  result: MyString
+  started_at: 2022-06-01 20:33:00
+  ended_at: 2022-06-01 20:33:00
+  deleted_at: 2022-06-01 20:33:00
+  timestamps: MyString

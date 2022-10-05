@@ -1,0 +1,170 @@
+#!/bin/bash -e
+
+((SCRIPT_DEBUG == 1)) && set -x
+((SCRIPT_DEBUG == 1)) && trap '(read -p "\n[$BASH_SOURCE:$LINENO] Execute \"$__LINE__ $BASH_COMMAND\"?\n")' DEBUG
+
+die()
+{
+  err "$@"
+  read -t 15 -r -p 'Hit enter to exit'
+  exit 1
+}
+
+_debug()
+{
+  if ((SCRIPT_DEBUG == 1)); then
+    err "$@"
+  fi
+}
+
+err()
+{
+  # shellcheck disable=SC2059
+  printf "$@" 1>&2
+}
+
+boolean()
+{
+  local answer
+  printf "return value: %s\n" "$?"
+  read -r -p "$@" answer
+  case $answer in
+    t | true | 1 | y | yes)
+      return 0
+      ;;
+    f | false | 0 | n | no)
+      return 1
+      ;;
+    *)
+      boolean "$@"
+      ;;
+  esac
+}
+
+get_index()
+{
+  local value=$1
+  shift
+  local my_array=("$@")
+
+  for i in "${!my_array[@]}"; do
+    if [[ "${my_array[$i]}" = "${value}" ]]; then
+      printf '%s' "$i"
+    fi
+  done
+}
+
+use_fzf()
+{
+  local index answer query
+  query=$1
+  shift
+  err '%s\n\n' "$query"
+  answer=$(printf '%s\n' "$@" | fzf --height 10 --no-mouse --tac --no-sort --header "$query")
+  err '<%s>\n' "$answer"
+  index=$((1 + $(get_index "$answer" "$@")))
+  printf '%s' "$index"
+}
+
+choose_something()
+{
+  if command -v fzf > /dev/null; then
+    REPLY=$(use_fzf "$@")
+  else
+
+    local PS3="$1 ? "
+    shift
+
+    select _choice in "$@"; do
+      if [[ -n "$_choice" ]]; then
+        _debug 'User selected item <%s> with value of <%s>\n' "$REPLY" "$_choice"
+        break
+      fi
+      err '<%s> is not a valid selection, please try again.\n' "$REPLY"
+    done
+  fi
+  _debug "REPLY - $REPLY "
+}
+
+log_result()
+{
+  # timestamp, uuid, action, time
+  action=$1
+  time=$2
+
+  printf '%s\t%s\t%s\t%s\n' "$EPOCHREALTIME" "$uuid" "$action" "$time" >> ~/permanent/reminders.history.csv
+}
+
+mark_done()
+{
+  err 'User selected already done\n'
+  log_result already_done ""
+}
+
+mark_skipped()
+{
+  err 'User selected "Skip for now"\n'
+  if boolean "Really Skip??"; then
+    log_result skipped ""
+  else
+    select_action
+  fi
+}
+
+snooze_reminder()
+{
+  local snooze_time
+  snooze_time=$1
+
+  # while snooze_time is not an integer
+  while ! [ "$snooze_time" -eq "$snooze_time" ] 2> /dev/null; do
+    read -r -p 'Snooze time in minutes? ' snooze_time
+  done
+
+  err 'Snoozing %s for %s minutes.\n' "$uuid" "$snooze_time"
+  log_result snoozing "$snooze_time"
+  schedule_reminder "$snooze_time"
+  log_result snoozed "$snooze_time"
+}
+
+schedule_reminder()
+{
+  snooze_time=$1
+  printf 'DISPLAY=%s reminder-xterm "%s" %s\n' "$DISPLAY" "$msg" "$uuid" | at now + "$snooze_time" minute
+  ((SCRIPT_DEBUG == 1)) && atq
+}
+
+choose_action()
+{
+  choose_something "$msg" "Already done" "Skip for now" "Snooze" || die "Failed in choose_something.  Exiting.\n"
+}
+
+select_action()
+{
+  choose_action
+
+  case $REPLY in
+    1)
+      mark_done "$uuid"
+      ;;
+    2)
+      mark_skipped "$uuid"
+      ;;
+    3)
+      snooze_reminder
+      printf 'Snooze successful\n'
+      ;;
+    *)
+      select_action
+      # die 'Something went wrong choosing the action.  Snoozing for 1 minute. choose_something set REPLY to <%s>\n' "$REPLY"
+      # snooze_reminder 1
+      ;;
+  esac
+}
+
+msg=$1
+uuid=$2
+shift 2
+
+select_action "$@" || snooze_reminder 1
+read -r -p 'Hit enter to close' -t 10

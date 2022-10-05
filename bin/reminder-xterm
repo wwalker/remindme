@@ -1,0 +1,43 @@
+#!/bin/bash
+
+die() {
+  # shellcheck disable=SC2059
+  printf "$@"
+  exit 1
+}
+
+find_display() {
+  export DISPLAY
+  DISPLAY=$(pgrep -af /usr/libexec/Xorg | awk '{print $3}' | sort | head -n 1)
+  xrdb -q >&/dev/null
+}
+
+# returns 1 if hits timeout (max_wait)
+wait_for_idle() {
+  local min_idle=$1
+  local max_wait=$2
+  local go_anyway=$((EPOCHSECONDS + max_wait))
+
+  min_idle=${min_idle:-5}
+  max_wait=${max_wait:-30}
+
+  while ((EPOCHSECONDS < go_anyway)); do
+    idle_time_ms=$(get-idle-time)
+    printf '%s\n' "$idle_time_ms"
+    idle_time=$((idle_time_ms / 1000))
+    printf '%s\n' "$idle_time"
+    ((idle_time > 5)) && return 0
+    sleep 1
+  done
+  return 1
+}
+
+PATH=~/bin:$PATH
+
+find_display || die "No valid DISPLAY found"
+
+(( $(get-idle-time) > 1800000 )) && die 'session has been idle for more than 30 minutes'
+
+# wait_for_idle 5 300 || die 'Timed out after 45 seconds. Exiting\n'
+
+xterm -title 'Reminder' -geometry 60x40 -e "reminder '$1' '$2'"
