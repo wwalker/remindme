@@ -131,7 +131,7 @@ class Scheduler
           end
         end
       print_waiting
-      input = gets
+      sleep 3
     end
   end
 end
