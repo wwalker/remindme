@@ -2,6 +2,7 @@
 
 # frozen_string_literal: true
 
+require "timeout"
 require 'pp'
 require 'net/http'
 require 'uri'
@@ -18,7 +19,7 @@ module ApiClient
 
     API_URLS = {
       staging: 'http://projectname-staging.client.com/api/v1',
-      development: 'http://localhost:3001'
+      development: 'http://tnt:3001'
     }.freeze
 
     METHODS = { post: Net::HTTP::Post, put: Net::HTTP::Put, get: Net::HTTP::Get }.freeze
@@ -59,17 +60,50 @@ module ApiClient
 end
 
 class Scheduler
+  @@popup_prg = 'popup-choices'
+  @@minimum_idle_sec            = 5   # wait until user is inactive for this long
+  @@maximum_wait_sec            = 30  # wait this long before notifying although active
+  @@maximum_idle_sec            = 120 # after this time we assume screen is locked
+  @@wait_after_no_notifications = 60  # If there was nothing to do, sleep for a while
+
+  def get_idle_time 
+    # will differ by OS later
+    # depends on get-idle-time, which I wrote
+    idle_time_ms = `get-idle-time`.chomp.to_i
+    return ( idle_time_ms / 1000.0 )
+  end
+
+  def wait_until_inactive
+    # If the user has been idle too long, assume user is gone and/or
+    # the screen is locked.  Do not notify during this
+    while get_idle_time > @@maximum_idle_sec do
+      err 'No system activity for #{@@maximum_idle_sec} seconds'
+      sleep @@minimum_idle_sec
+      # FIXME - maybe pop up a window with a timeout to prompt the
+      # user in case they are just reading or some such
+    end
+
+    # In order to not steal the mouse or keyboard from the user while the
+    # user is active, we will try to wait for the user to be "inactive"
+    # (neither typing nor mousing) before allowing notification popups.
+    #
+    # However, if they remain active for too long, go ahead and allow
+    # notifications to interrupt.
+    start_time = Time.now
+    while Time.now < (start_time + @@maximum_wait_sec) do
+      return true if get_idle_time > @@minimum_idle_sec
+      sleep 1
+    end
+    return true
+  end
+
   def debug_log(msg)
     STDERR.puts(msg)
   end
 
   def handle_notification(msg)
     choices=['Done', 'Already Done', 'Snooze', 'Skip']
-    stdout, stderr, status = Open3.capture3('rofi-choices', msg, *choices)
-    choice=stdout.chomp
-    if choice == 'Snooze'
-      stdout, stderr, status = Open3.capture3('rofi', '-dmenu', '-l', '0', '-p', 'Snooze for how long?')
-    end
+    stdout, stderr, status = Open3.capture3(@@popup_prg, msg, *choices)
     return stdout.chomp
   end
 
@@ -127,29 +161,47 @@ class Scheduler
 
   def run
     @client = ApiClient::Http.new
+    active = false
     while true do
-      puts 1
+      wait_until_inactive unless active
+      active = false
       print_next_runs unless print_waiting
-      puts 2
       response = @client.send_request(:get, '/notifications/next_to_run.json')
-        response_json = handle_response(response)
-        id = response_json['id']
-        if msg = response_json['msg']
-          choice = handle_notification(msg)
-          debug_log "<#{choice}>"
-          case choice
-          when 'Done', 'Already Done', 'Skip'
-            mark_as(id, choice)
-          when 'Snooze'
-            debug_log 'We should never get "Snooze" as a choice'
-          when /^\s*[0-9]+\s*[hms]?\s*$/
-            snooze(id, choice)
-          else
-            debug_log "Why is choice <#{choice}>?"
-          end
+      response_json = handle_response(response)
+      id = response_json['id']
+      if msg = response_json['msg']
+        choice = handle_notification(msg)
+        debug_log "<#{choice}>"
+        case choice
+        when 'Done', 'Already Done', 'Skip'
+          mark_as(id, choice)
+        when 'Snooze'
+          debug_log 'We should never get "Snooze" as a choice'
+        when /^\s*[0-9]+\s*[hms]?\s*$/
+          snooze(id, choice)
         else
-          sleep 5
+          debug_log "Why is choice <#{choice}>?"
         end
+        # We just interacted with the user, use this to skip inactivity
+        # checking if there is another notification waiting to be sent.
+        active = true
+      else
+        # sleep 5
+        active = false
+
+        puts 'There was nothing to do, so we are waiting 60 seconds, or until you hit enter'
+        begin
+          Timeout::timeout 10 do
+            input = gets.chomp
+          end
+        rescue Timeout::Error
+          ans = nil
+        end
+
+        input = gets
+      end
+      # always sleep 1 second to allwo someone to do something outside of the popup app
+      sleep 1
     end
   end
 end
