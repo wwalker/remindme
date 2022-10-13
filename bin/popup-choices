@@ -1,5 +1,13 @@
 #!/usr/bin/env ruby
 
+# `popup-choices` will take a list of selections and display them to the user
+# should the user seelct "Pause" or "Snooze", popup-choices will prompt for 
+# a time input wqhich should be in one of these forms:
+#   15  # assumes minutes
+#   7m  # specified minutes
+#   22s # specified seconds
+#   2h  # specified hours
+# This implementation uses rofi and rofi-choices (a script I wrote) as the PoC client.
 require 'open3'
 
 msg = ARGV.shift
