@@ -60,6 +60,7 @@ module ApiClient
 end
 
 class Scheduler
+  @@beep_prg = 'beep'
   @@popup_prg = 'popup-choices'
   @@minimum_idle_sec            = 5   # wait until user is inactive for this long
   @@maximum_wait_sec            = 30  # wait this long before notifying although active
@@ -102,9 +103,25 @@ class Scheduler
   end
 
   def handle_notification(msg)
-    choices=['Done', 'Already Done', 'Snooze', 'Skip']
+    system('beep')
+    choices=['','Done', 'Already Done', 'Snooze', 'Skip', 'Pause' ]
     stdout, stderr, status = Open3.capture3(@@popup_prg, msg, *choices)
     return stdout.chomp
+  end
+
+  def pause(period)
+    period.gsub!(/\s+/,'')
+    case period
+    when /^(\d+)h$/
+      period=3600*$1.to_i
+    when /^(\d+)m?$/
+      period=60*$1.to_i
+    when /^(\d+)s$/
+      period=$1.to_i
+    else
+      die("Bad input - period:<#{period}>")
+    end
+    sleep(period)
   end
 
   def snooze(id, time)
@@ -177,6 +194,8 @@ class Scheduler
           mark_as(id, choice)
         when 'Snooze'
           debug_log 'We should never get "Snooze" as a choice'
+        when /^\s*P\s*([0-9]+\s*[hms]?)\s*$/
+          pause($1)
         when /^\s*[0-9]+\s*[hms]?\s*$/
           snooze(id, choice)
         else

@@ -8,4 +8,8 @@ choice=stdout.chomp
 if choice == 'Snooze'
   stdout, stderr, status = Open3.capture3('rofi', '-dmenu', '-l', '0', '-p', 'Snooze for how long?')
 end
+if choice == 'Pause'
+  stdout, stderr, status = Open3.capture3('rofi', '-dmenu', '-l', '0', '-p', 'Snooze for how long?')
+  stdout="P" + stdout
+end
 puts stdout
