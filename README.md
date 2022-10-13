@@ -1,5 +1,23 @@
 # ReMindME
 
+## TLDR - setup, still a Proof of Concept, it is UGLY
+```
+cd remindme
+# edit `populate-reminders.rb` to populate the DB with things to remind you of
+# there is no input UI yet.  I HIGHLY recommend that both the scheduler and the
+# rails server run with TZ=UTC.  You will have to take that into account as you 
+# edit populate-reminders.rb
+$EDITOR populate-reminders.rb
+# Create the database locally (sqlite file by default)
+rake db:migrate
+# populate the database with reminders
+rails c < populate-reminders.rb
+# start the rails server, on port 3001, leaving it running in the foreground for now.
+TZ=UTC rails s -p 3001 -b 0.0.0.0
+# start the scheduler, in the foreground:
+TZ=UTC bin/scheduler
+```
+
 ## What
 
 Yet Another Reminder App
