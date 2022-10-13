@@ -77,7 +77,7 @@ class Scheduler
     # If the user has been idle too long, assume user is gone and/or
     # the screen is locked.  Do not notify during this
     while get_idle_time > @@maximum_idle_sec do
-      err 'No system activity for #{@@maximum_idle_sec} seconds'
+      puts 'No system activity for #{@@maximum_idle_sec} seconds'
       sleep @@minimum_idle_sec
       # FIXME - maybe pop up a window with a timeout to prompt the
       # user in case they are just reading or some such
@@ -189,16 +189,16 @@ class Scheduler
         # sleep 5
         active = false
 
-        puts 'There was nothing to do, so we are waiting 60 seconds, or until you hit enter'
-        begin
-          Timeout::timeout 10 do
-            input = gets.chomp
-          end
-        rescue Timeout::Error
-          ans = nil
-        end
-
-        input = gets
+        sleep 15
+        # puts 'There was nothing to do, so we are waiting 60 seconds, or until you hit enter'
+        # begin
+        #   Timeout::timeout 10 do
+        #     input = gets.chomp
+        #   end
+        # rescue Timeout::Error
+        #   ans = nil
+        # end
+        # input = gets
       end
       # always sleep 1 second to allwo someone to do something outside of the popup app
       sleep 1
