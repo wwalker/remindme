@@ -14,7 +14,7 @@ msg = ARGV.shift
 stdout, stderr, status = Open3.capture3('rofi-choices', msg, *ARGV)
 choice=stdout.chomp
 if choice == 'Snooze'
-  stdout, stderr, status = Open3.capture3('rofi', '-theme-str', 'window {width: 0;}', '-dmenu', '-l', '0', '-p', 'Snooze for how long?')
+  stdout, stderr, status = Open3.capture3('rofi', '-dmenu', '-l', '0', '-p', 'Snooze for how long?')
 end
 if choice == 'Pause'
   stdout, stderr, status = Open3.capture3('rofi', '-dmenu', '-l', '0', '-p', 'Snooze for how long?')
