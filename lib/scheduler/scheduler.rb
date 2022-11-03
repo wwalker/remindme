@@ -70,7 +70,10 @@ class Scheduler
   def get_idle_time 
     # will differ by OS later
     # depends on get-idle-time, which I wrote
+    ENV['DISPLAY']=':0'
     idle_time_ms = `get-idle-time`.chomp.to_i
+    idle_time_ms = 1E6 if idle_time_ms == 0
+    debug_log idle_time_ms
     return ( idle_time_ms / 1000.0 )
   end
 
