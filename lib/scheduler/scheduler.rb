@@ -77,12 +77,12 @@ class Scheduler
     return ( idle_time_ms / 1000.0 )
   end
 
-  def wait_until_inactive
+  def wait_until_inactive(min_idle = @@minimum_idle_sec)
     # If the user has been idle too long, assume user is gone and/or
     # the screen is locked.  Do not notify during this
     while get_idle_time > @@maximum_idle_sec do
       puts 'No system activity for #{@@maximum_idle_sec} seconds'
-      sleep @@minimum_idle_sec
+      sleep 1
       # FIXME - maybe pop up a window with a timeout to prompt the
       # user in case they are just reading or some such
     end
@@ -95,7 +95,7 @@ class Scheduler
     # notifications to interrupt.
     start_time = Time.now
     while Time.now < (start_time + @@maximum_wait_sec) do
-      return true if get_idle_time > @@minimum_idle_sec
+      return true if get_idle_time > min_idle
       sleep 1
     end
     return true
@@ -183,7 +183,7 @@ class Scheduler
     @client = ApiClient::Http.new
     active = false
     while true do
-      wait_until_inactive unless active
+      wait_until_inactive(active ? 1 : 5)
       active = false
       print_next_runs unless print_waiting
       response = @client.send_request(:get, '/notifications/next_to_run.json')

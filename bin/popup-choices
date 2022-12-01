@@ -10,6 +10,7 @@
 # This implementation uses rofi and rofi-choices (a script I wrote) as the PoC client.
 require 'open3'
 
+ENV['DISPLAY']||=':0'
 msg = ARGV.shift
 stdout, stderr, status = Open3.capture3('rofi-choices', msg, *ARGV)
 choice=stdout.chomp
