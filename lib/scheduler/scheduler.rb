@@ -183,7 +183,7 @@ class Scheduler
     @client = ApiClient::Http.new
     active = false
     while true do
-      wait_until_inactive(active ? 1 : 5)
+      wait_until_inactive(active ? 0 : 5)
       active = false
       print_next_runs unless print_waiting
       response = @client.send_request(:get, '/notifications/next_to_run.json')
@@ -208,22 +208,11 @@ class Scheduler
         # checking if there is another notification waiting to be sent.
         active = true
       else
-        # sleep 5
         active = false
 
-        sleep 15
-        # puts 'There was nothing to do, so we are waiting 60 seconds, or until you hit enter'
-        # begin
-        #   Timeout::timeout 10 do
-        #     input = gets.chomp
-        #   end
-        # rescue Timeout::Error
-        #   ans = nil
-        # end
-        # input = gets
+        sleep 1
       end
-      # always sleep 1 second to allwo someone to do something outside of the popup app
-      sleep 1
+      sleep 0.1
     end
   end
 end
