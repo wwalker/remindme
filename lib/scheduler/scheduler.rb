@@ -210,7 +210,7 @@ class Scheduler
       else
         active = false
 
-        sleep 1
+        sleep 10
       end
       sleep 0.1
     end
