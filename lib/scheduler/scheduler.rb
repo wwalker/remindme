@@ -62,8 +62,8 @@ end
 class Scheduler
   @@beep_prg = 'beep'
   @@popup_prg = 'popup-choices'
-  @@minimum_idle_sec            = 5   # wait until user is inactive for this long
-  @@maximum_wait_sec            = 30  # wait this long before notifying although active
+  @@minimum_idle_sec            = 30   # wait until user is inactive for this long
+  @@maximum_wait_sec            = 60  # wait this long before notifying although active
   @@maximum_idle_sec            = 120 # after this time we assume screen is locked
   @@wait_after_no_notifications = 60  # If there was nothing to do, sleep for a while
 
@@ -183,7 +183,7 @@ class Scheduler
     @client = ApiClient::Http.new
     active = false
     while true do
-      wait_until_inactive(active ? 0 : 5)
+      wait_until_inactive(active ? 3 : @@minimum_idle_sec)
       active = false
       print_next_runs unless print_waiting
       response = @client.send_request(:get, '/notifications/next_to_run.json')
