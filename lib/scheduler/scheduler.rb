@@ -181,7 +181,7 @@ class Scheduler
 
   def run
     @client = ApiClient::Http.new
-    active = false
+    active = true
     while true do
       wait_until_inactive(active ? 2 : @@minimum_idle_sec)
       active = false
