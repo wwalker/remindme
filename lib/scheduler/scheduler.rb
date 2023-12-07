@@ -183,7 +183,7 @@ class Scheduler
     @client = ApiClient::Http.new
     active = false
     while true do
-      wait_until_inactive(active ? 3 : @@minimum_idle_sec)
+      wait_until_inactive(active ? 2 : @@minimum_idle_sec)
       active = false
       print_next_runs unless print_waiting
       response = @client.send_request(:get, '/notifications/next_to_run.json')
