@@ -19,7 +19,7 @@ module ApiClient
 
     API_URLS = {
       staging: 'http://projectname-staging.client.com/api/v1',
-      development: 'http://tnt:3001'
+      development: 'http://localhost:3001'
     }.freeze
 
     METHODS = { post: Net::HTTP::Post, put: Net::HTTP::Put, get: Net::HTTP::Get }.freeze
