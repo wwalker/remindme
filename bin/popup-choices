@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # `popup-choices` will take a list of selections and display them to the user
-# should the user seelct "Pause" or "Snooze", popup-choices will prompt for 
+# should the user seelct "Pause" or "Snooze", popup-choices will prompt for
 # a time input wqhich should be in one of these forms:
 #   15  # assumes minutes
 #   7m  # specified minutes
@@ -14,11 +14,29 @@ ENV['DISPLAY']||=':0'
 msg = ARGV.shift
 stdout, stderr, status = Open3.capture3('rofi-choices', msg, *ARGV)
 choice=stdout.chomp
-if choice == 'Snooze'
+case choice
+when 'Snooze'
   stdout, stderr, status = Open3.capture3('rofi', '-dmenu', '-l', '0', '-p', 'Snooze for how long?')
+when 'Pause'
+  stdout, stderr, status = Open3.capture3('rofi', '-dmenu', '-l', '0', '-p', 'Pause for how long?')
+else
+  STDERR.puts "Unknown choice: #{choice}"
 end
-if choice == 'Pause'
-  stdout, stderr, status = Open3.capture3('rofi', '-dmenu', '-l', '0', '-p', 'Snooze for how long?')
-  stdout="P" + stdout
+
+File.open('/tmp/popup-choices.log', 'w', 0644) do |f|
+  f.puts choice
 end
+
+File.open('/tmp/popup-choices.err', 'w', 0644) do |f|
+  f.puts stderr
+end
+
+File.open('/tmp/popup-choices.err', 'w', 0644) do |f|
+  f.puts status.exitstatus
+end
+
 puts stdout
+exit 0 if stderr.empty?
+
+STDERR.puts stderr
+STDERR.puts status.exitstatus
